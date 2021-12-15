@@ -26,21 +26,21 @@ class CreateUserViewSet(viewsets.ModelViewSet):
                 username=serializer.data.get('username'))
             msg = account_activation_token.make_token(user)
             send_mail(
-                'Ваш код тута',
+                EMAIL_SUBJECT,
                 msg,
-                'server@server.serve',
+                #'server@server.serve',
                 [user.email],
                 fail_silently=True
             )
             return Response(
-                'Проверьте вашу почту туда прилетело письмецо',
+                'Проверьте вашу почту',
                 status=status.HTTP_200_OK
             )
         else:
             return Response(
                 {
-                    'username': ['Где?'],
-                    'email': ['Тоже надо бы']
+                    'username': ['Имя пользователя'],
+                    'email': ['Почта']
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
