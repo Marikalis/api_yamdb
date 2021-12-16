@@ -23,7 +23,8 @@ class CreateUserViewSet(viewsets.ModelViewSet):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user, created = User.objects.get_or_create(
-                username=serializer.data.get('username')
+                username=serializer.data.get('username'),
+                email=serializer.data.get('email')
             )
             user.is_active = False
             user.save()
@@ -36,7 +37,7 @@ class CreateUserViewSet(viewsets.ModelViewSet):
                 fail_silently=True
             )
             return Response(
-                f'Проверьте вашу почту {msg}',
+                serializer.data,
                 status=status.HTTP_200_OK
             )
         else:
