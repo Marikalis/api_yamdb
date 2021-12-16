@@ -9,6 +9,13 @@ ROLES = [
     (3, 'admin'),
 ]
 
+# class Activation(models.Model):
+#     username = models.CharField(
+#         max_length=150,
+#         unique=True,
+#         validators=[username_validator]
+#     )
+
 
 class User(AbstractUser):
     username_validator = RegexValidator(r'^[\w.@+-]+\z')
