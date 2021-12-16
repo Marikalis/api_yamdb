@@ -5,8 +5,13 @@ from reviews.models import User
 
 
 class UserSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    username = serializers.CharField(validators=[UniqueValidator(queryset=User.objects.all())])
     email = serializers.EmailField(validators=[UniqueValidator(queryset=User.objects.all())])
+    def validate(self, data):
+        if data['username'] == 'me':
+            raise serializers.ValidationError("Cannot signup as me")
+        return data
+
 
 
 class ConfirmationSerializer(serializers.Serializer):
