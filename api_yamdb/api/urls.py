@@ -9,6 +9,10 @@ router_1 = SimpleRouter()
 router_1.register('auth/signup', CreateUserViewSet, basename='signup')
 router_1.register('auth/token', ValidationUserViewSet, basename='activate')
 router_1.register('users', UsersViewSet, basename='users')
+#router_1.register(
+    #r'users/(?P<username>\d+)',
+    #CommentViewSet,
+    #basename='users'
 
 
 urlpatterns = [
