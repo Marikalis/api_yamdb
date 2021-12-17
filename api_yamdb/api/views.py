@@ -1,5 +1,6 @@
 from rest_framework import filters, mixins, permissions, viewsets
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from django.core.mail import EmailMessage
 from django.http import HttpResponse
@@ -8,12 +9,21 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework_jwt.settings import api_settings
 
+
+from .permissions import IsAdmin
 from reviews.models import User
-from .serializers import UserSerializer, ConfirmationSerializer
+from .serializers import SignupSerializer, ConfirmationSerializer, UsersSerializer
 from .tokens import account_activation_token
 
 
 EMAIL_SUBJECT = 'Код регистрации аккаунта'
+
+
+class UsersViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UsersSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = LimitOffsetPagination
 
 
 class CreateUserViewSet(viewsets.ModelViewSet):
@@ -21,7 +31,7 @@ class CreateUserViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.AllowAny,)
 
     def create(self, request):
-        serializer = UserSerializer(data=request.data)
+        serializer = SignupSerializer(data=request.data)
         if serializer.is_valid():
             user, created = User.objects.get_or_create(
                 username=serializer.data.get('username'),
@@ -49,12 +59,14 @@ class CreateUserViewSet(viewsets.ModelViewSet):
 
 class ValidationUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = (IsAdmin,)
 
     def create(self, request):
         serializer = ConfirmationSerializer(data=request.data)
         if serializer.is_valid():
-            user = get_object_or_404(User, username=serializer.data.get('username'))
+            user = get_object_or_404(
+                User,
+                username=serializer.data.get('username'))
             confirmation_code = serializer.data.get('confirmation_code')
             if user is not None and user.is_active is not True and account_activation_token.check_token(user, confirmation_code):
                 user.is_active = True
