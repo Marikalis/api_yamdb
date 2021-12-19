@@ -3,6 +3,8 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.core.validators import MaxValueValidator, MinValueValidator
 
+from .validators import year_validator
+
 ROLE_USER_ID = 1
 ROLES = [
     (ROLE_USER_ID, 'user'),
@@ -110,11 +112,11 @@ class Review(models.Model):
         validators=(
             MinValueValidator(
                 1,
-                message='Оценка должна быть в диапазоне от 1 до 10'
+                message='Оценка должна быть от 1 до 10'
             ),
             MaxValueValidator(
                 10,
-                message='Оценка должна быть в диапазоне от 1 до 10'
+                message='Оценка должна быть от 1 до 10'
             )
         )
     )
