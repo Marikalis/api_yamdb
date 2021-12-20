@@ -26,6 +26,21 @@ class UsersViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
 
 
+class UsernameViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UsersSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = LimitOffsetPagination
+
+    def get_user(self):
+        username = self.kwargs.get('username')
+        user = get_object_or_404(User, username=username)
+        return user
+
+    def get_queryset(self):
+        return self.get_user()
+
+
 class CreateUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
