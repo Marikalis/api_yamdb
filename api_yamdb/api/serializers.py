@@ -28,6 +28,12 @@ class ConfirmationSerializer(serializers.Serializer):
 
 class UsersSerializer(serializers.ModelSerializer):
 
+    # def create(self, validated_data):
+    #     user = User.objects.create(
+    #         username=validated_data['username']
+    #     )
+    #     return user
+
     class Meta:
         fields = '__all__'
         model = User

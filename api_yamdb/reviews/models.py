@@ -2,9 +2,9 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import RegexValidator
 
-USER = 1
-MODERATOR = 2
-ADMIN = 3
+USER = 'user'
+MODERATOR = 'moderator'
+ADMIN = 'admin'
 
 ROLES = [
     (USER, 'user'),

@@ -21,15 +21,17 @@ EMAIL_SUBJECT = 'Код регистрации аккаунта'
 
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username',)
     serializer_class = UsersSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, IsAdmin,)
     pagination_class = LimitOffsetPagination
 
 
 class UsernameViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UsersSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, IsAdmin,)
     pagination_class = LimitOffsetPagination
 
     def get_user(self):
@@ -74,7 +76,7 @@ class CreateUserViewSet(viewsets.ModelViewSet):
 
 class ValidationUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    permission_classes = (IsAdmin,)
+    permission_classes = (permissions.AllowAny,)
 
     def create(self, request):
         serializer = ConfirmationSerializer(data=request.data)
