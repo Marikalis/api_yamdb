@@ -26,7 +26,7 @@ class ConfirmationSerializer(serializers.Serializer):
     confirmation_code = serializers.CharField()
 
 
-class UsersSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
 
     # def create(self, validated_data):
     #     user = User.objects.create(

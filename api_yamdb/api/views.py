@@ -12,35 +12,20 @@ from rest_framework_jwt.settings import api_settings
 
 from .permissions import IsAdmin
 from reviews.models import User
-from .serializers import SignupSerializer, ConfirmationSerializer, UsersSerializer
+from .serializers import SignupSerializer, ConfirmationSerializer, UserSerializer
 from .tokens import account_activation_token
 
 
 EMAIL_SUBJECT = 'Код регистрации аккаунта'
 
 
-class UsersViewSet(viewsets.ModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
-    serializer_class = UsersSerializer
+    serializer_class = UserSerializer
     permission_classes = (permissions.IsAuthenticated, IsAdmin,)
-    pagination_class = LimitOffsetPagination
-
-
-class UsernameViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UsersSerializer
-    permission_classes = (permissions.IsAuthenticated, IsAdmin,)
-    pagination_class = LimitOffsetPagination
-
-    def get_user(self):
-        username = self.kwargs.get('username')
-        user = get_object_or_404(User, username=username)
-        return user
-
-    def get_queryset(self):
-        return self.get_user()
+    lookup_field = 'username'
 
 
 class CreateUserViewSet(viewsets.ModelViewSet):
