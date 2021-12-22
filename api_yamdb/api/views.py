@@ -7,7 +7,6 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 # from django.core.exceptions import ValidationError
 from rest_framework import status
-from rest_framework_jwt.settings import api_settings
 
 
 from .permissions import IsAdmin

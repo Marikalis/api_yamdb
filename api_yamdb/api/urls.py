@@ -9,11 +9,6 @@ router_1 = SimpleRouter()
 router_1.register('auth/signup', CreateUserViewSet, basename='signup')
 router_1.register('auth/token', ValidationUserViewSet, basename='activate')
 router_1.register('users', UserViewSet, basename='users')
-router_1.register(
-    r'users/(?P<username>\d+)',
-    UserViewSet,
-    basename='users')
-router_1.register('users/me', UserViewSet, basename='users')
 
 
 urlpatterns = [

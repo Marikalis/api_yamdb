@@ -32,7 +32,7 @@ class UserSerializer(serializers.ModelSerializer):
             queryset=User.objects.all())]
     )
 
-    def validate_role(self,role):
+    def validate_role(self, role):
         user = self.context['request'].user
         if user.role == 'admin' or user.is_superuser:
             return role
@@ -44,5 +44,5 @@ class UserSerializer(serializers.ModelSerializer):
         return username
 
     class Meta:
-        fields = '__all__'
+        fields = 'username', 'username', 'email', 'role', 'first_name', 'last_name', 'bio'
         model = User

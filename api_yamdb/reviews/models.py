@@ -14,7 +14,7 @@ ROLES = [
 
 
 class User(AbstractUser):
-    username_validator = RegexValidator(r'^[\w.@+-]+\z')
+    username_validator = RegexValidator(r'^[\w.@+-]+')
     username = models.CharField(
         max_length=150,
         unique=True,
@@ -25,17 +25,19 @@ class User(AbstractUser):
         unique=True,
         blank=True
     )
-    password = None
     bio = models.TextField(
         'Биография',
+        max_length=256,
         blank=True,
     )
     role = models.CharField(
         'Роль',
-        max_length=150,
+        max_length=30,
         default=USER,
         choices=ROLES
     )
+    password = None
+
     REQUIRED_FIELDS = ['email']
 
     class Meta(AbstractUser.Meta):
