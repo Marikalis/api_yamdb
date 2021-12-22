@@ -17,7 +17,7 @@ class SignupSerializer(serializers.Serializer):
 
     def validate(self, data):
         if data['username'] == 'me':
-            raise serializers.ValidationError("Cannot signup as me")
+            raise serializers.ValidationError('Cannot signup as me')
         return data
 
 
@@ -27,12 +27,21 @@ class ConfirmationSerializer(serializers.Serializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(
+        validators=[UniqueValidator(
+            queryset=User.objects.all())]
+    )
 
-    # def create(self, validated_data):
-    #     user = User.objects.create(
-    #         username=validated_data['username']
-    #     )
-    #     return user
+    def validate_role(self,role):
+        user = self.context['request'].user
+        if user.role == 'admin' or user.is_superuser:
+            return role
+        return 'user'
+
+    def validate_username(self, username):
+        if username == "me":
+            raise serializers.ValidationError('Имя me запрещено')
+        return username
 
     class Meta:
         fields = '__all__'

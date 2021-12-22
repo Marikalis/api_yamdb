@@ -13,6 +13,7 @@ router_1.register(
     r'users/(?P<username>\d+)',
     UserViewSet,
     basename='users')
+router_1.register('users/me', UserViewSet, basename='users')
 
 
 urlpatterns = [

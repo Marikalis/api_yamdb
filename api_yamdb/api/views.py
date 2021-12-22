@@ -1,5 +1,5 @@
 from rest_framework import filters, mixins, permissions, viewsets
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from django.core.mail import EmailMessage
@@ -26,6 +26,38 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = (permissions.IsAuthenticated, IsAdmin,)
     lookup_field = 'username'
+    pagination_class = LimitOffsetPagination
+
+    @action(
+        methods=['get', 'patch'],
+        detail=False,
+        url_path='me',
+        permission_classes=(permissions.IsAuthenticated,)
+    )
+    def users_profile(self, request):
+        user = get_object_or_404(
+            User,
+            username=request.user.username)
+
+        if request.method == 'PATCH':
+            serializer = UserSerializer(
+                user,
+                context={'request': request},
+                data=request.data,
+                partial=True
+            )
+            if serializer.is_valid():
+                serializer.save()
+                return Response(
+                    serializer.data,
+                    status=status.HTTP_200_OK)
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        serializer = self.get_serializer(user)
+
+        return Response(serializer.data)
 
 
 class CreateUserViewSet(viewsets.ModelViewSet):
