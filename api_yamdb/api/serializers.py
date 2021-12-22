@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueValidator
 
 from reviews.models import User
@@ -36,13 +35,8 @@ class UserSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         if user.role == 'admin' or user.is_superuser:
             return role
-        return 'user'
-
-    def validate_username(self, username):
-        if username == "me":
-            raise serializers.ValidationError('Имя me запрещено')
-        return username
+        return user.role
 
     class Meta:
-        fields = 'username', 'username', 'email', 'role', 'first_name', 'last_name', 'bio'
+        fields = 'username', 'email', 'role', 'first_name', 'last_name', 'bio'
         model = User

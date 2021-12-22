@@ -1,21 +1,22 @@
-from rest_framework import filters, mixins, permissions, viewsets
-from rest_framework.decorators import action, api_view, permission_classes
+from django.core.mail import EmailMessage
+from django.shortcuts import get_object_or_404
+from rest_framework import filters, permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
-from django.core.mail import EmailMessage
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-# from django.core.exceptions import ValidationError
-from rest_framework import status
-
+from rest_framework_simplejwt.settings import api_settings
 
 from .permissions import IsAdmin
 from reviews.models import User
-from .serializers import SignupSerializer, ConfirmationSerializer, UserSerializer
+from .serializers import (
+    SignupSerializer,
+    ConfirmationSerializer,
+    UserSerializer)
 from .tokens import account_activation_token
 
 
-EMAIL_SUBJECT = 'Код регистрации аккаунта'
+CORRECT_CODE = 'Код регистрации аккаунта'
+WRONG_CODE = 'Неверный код активации'
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -74,7 +75,7 @@ class CreateUserViewSet(viewsets.ModelViewSet):
             user.save()
             msg = account_activation_token.make_token(user)
             email = EmailMessage(
-                EMAIL_SUBJECT,
+                CORRECT_CODE,
                 msg,
                 to=[serializer.data.get('email')]
             )
@@ -101,7 +102,12 @@ class ValidationUserViewSet(viewsets.ModelViewSet):
                 User,
                 username=serializer.data.get('username'))
             confirmation_code = serializer.data.get('confirmation_code')
-            if user is not None and user.is_active is not True and account_activation_token.check_token(user, confirmation_code):
+            if (user is not None
+                    and user.is_active is not True
+                    and account_activation_token.check_token(
+                        user,
+                        confirmation_code
+                    )):
                 user.is_active = True
                 user.save()
                 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
@@ -117,7 +123,7 @@ class ValidationUserViewSet(viewsets.ModelViewSet):
                 )
             else:
                 return Response(
-                    'Неверный код активации',
+                    WRONG_CODE,
                     status=status.HTTP_400_BAD_REQUEST
                 )
         else:
