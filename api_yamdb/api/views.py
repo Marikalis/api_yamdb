@@ -1,23 +1,24 @@
-from django.db.models import Avg
-from rest_framework import filters, mixins, permissions, viewsets, status
-from rest_framework.decorators import api_view, permission_classes, action
-from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
-from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
 from django.core.mail import EmailMessage
+from django.db.models import Avg
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.pagination import (LimitOffsetPagination,
+                                       PageNumberPagination)
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
 from rest_framework_simplejwt.settings import api_settings
+from reviews.models import Category, Genre, Title, User, Review
 
-from .permissions import IsAdmin, IsAdminOrReadOnly, IsAuthorOrModerOrReadOnly
-from reviews.models import User, Category, Genre, Title
-from .serializers import (
-    SignupSerializer,
-    ConfirmationSerializer,
-    UserSerializer)
-from .tokens import account_activation_token
 from .filters import TitlesFilter
-
+from .permissions import IsAdmin, IsAdminOrReadOnly, IsAuthorOrModerOrReadOnly
+from .serializers import (CategorySerializer, ConfirmationSerializer, CommentSerializer,
+                          GenreSerializer, ReviewSerializer, SignupSerializer,
+                          TitlePostSerializer, TitleSerializer, UserSerializer)
+from .tokens import account_activation_token
 
 CORRECT_CODE = 'Код регистрации аккаунта'
 WRONG_CODE = 'Неверный код активации'
@@ -147,7 +148,7 @@ class CreateListDeleteViewSet(mixins.CreateModelMixin,
 class CategoryViewSet(CreateListDeleteViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdmin]
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -156,7 +157,7 @@ class CategoryViewSet(CreateListDeleteViewSet):
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdmin]
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -172,7 +173,7 @@ class TitlesViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
 
     permission_classes = (
-        IsAdminOrReadOnly,
+        IsAdmin,
     )
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,
                        filters.OrderingFilter)
@@ -187,10 +188,7 @@ class TitlesViewSet(viewsets.ModelViewSet):
 class ReviewsViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     pagination_class = LimitOffsetPagination
-    permission_classes = (
-        IsAuthorOrModerOrReadOnly,
-        IsAuthenticatedOrReadOnly
-    )
+    permission_classes = (IsAdmin,)
 
     def _get_title(self):
         return get_object_or_404(Title, id=self.kwargs['title_id'])
@@ -202,3 +200,23 @@ class ReviewsViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         title = self._get_title()
         return title.reviews.all()
+
+
+class CommentsViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = CommentSerializer
+    pagination_class = LimitOffsetPagination
+    permission_classes = (
+        IsAdmin,
+    )
+
+    def _get_review(self):
+        return get_object_or_404(Review, id=self.kwargs['review_id'])
+
+    def perform_create(self, serializer):
+        review = self._get_review()
+        serializer.save(author=self.request.user, review=review)
+
+    def get_queryset(self):
+        review = self._get_review()
+        return review.comments.all()

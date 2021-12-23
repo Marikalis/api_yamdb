@@ -4,8 +4,6 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueValidator
-
-
 from reviews import models
 
 
@@ -89,11 +87,11 @@ class TitlePostSerializer(serializers.ModelSerializer):
 class SignupSerializer(serializers.Serializer):
     username = serializers.CharField(
         validators=[UniqueValidator(
-            queryset=User.objects.all())]
+            queryset=models.User.objects.all())]
     )
     email = serializers.EmailField(
         validators=[UniqueValidator(
-            queryset=User.objects.all())]
+            queryset=models.User.objects.all())]
     )
 
     def validate(self, data):
@@ -110,7 +108,7 @@ class ConfirmationSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         validators=[UniqueValidator(
-            queryset=User.objects.all())]
+            queryset=models.User.objects.all())]
     )
 
     def validate_role(self, role):
@@ -121,4 +119,4 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = 'username', 'email', 'role', 'first_name', 'last_name', 'bio'
-        model = User
+        model = models.User
