@@ -12,6 +12,8 @@ ROLES = [
     (ADMIN, 'admin'),
 ]
 
+SCORES = [ (i, i) for i in range (1, 11)]
+
 
 class User(AbstractUser):
     username_validator = RegexValidator(r'^[\w.@+-]+')
@@ -42,3 +44,45 @@ class User(AbstractUser):
 
     class Meta(AbstractUser.Meta):
         swappable = 'AUTH_USER_MODEL'
+
+
+class Rewiew(models.Model):
+    title = models.ForeignKey(
+        Title,
+        'Произведение'
+        on_delete=models.CASCADE,
+        related_name='reviews')
+    text = models.TextField()
+    author = models.ForeignKey(
+        User,
+        'Автор',
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        db_column='author')
+    score = models.IntegerField(
+        'Оценка',
+        choices=SCORES)
+    pub_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'reviews'
+        constraints = [models.UniqueConstraint(
+            fields=['title', 'author'],
+            name='unique author review')]
+
+class Comment(models.Model):
+    rewiew = models.ForeignKey(
+        Rewiew,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        db_column='author')
+    pub_date = models.DateTimeField(auto_now_add=True)
+    text = models.TextField()
+
+    class Meta:
+        db_table = 'comments'
