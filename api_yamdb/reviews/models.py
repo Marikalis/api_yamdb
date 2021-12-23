@@ -1,15 +1,15 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import RegexValidator
-from django.core.validators import MaxValueValidator, MinValueValidator
 
-from .validators import year_validator
+USER = 1
+MODERATOR = 2
+ADMIN = 3
 
-ROLE_USER_ID = 1
 ROLES = [
-    (ROLE_USER_ID, 'user'),
-    (2, 'moderator'),
-    (3, 'admin'),
+    (USER, 'user'),
+    (MODERATOR, 'moderator'),
+    (ADMIN, 'admin'),
 ]
 
 
@@ -20,7 +20,12 @@ class User(AbstractUser):
         unique=True,
         validators=[username_validator]
     )
-    email = models.EmailField('Почта', max_length=254, blank=True)
+    email = models.EmailField(
+        'Почта',
+        unique=True,
+        blank=True
+    )
+    password = None
     bio = models.TextField(
         'Биография',
         blank=True,
@@ -28,9 +33,13 @@ class User(AbstractUser):
     role = models.CharField(
         'Роль',
         max_length=150,
-        default=ROLE_USER_ID,
+        default=USER,
         choices=ROLES
     )
+    REQUIRED_FIELDS = ['email']
+
+    class Meta(AbstractUser.Meta):
+        swappable = 'AUTH_USER_MODEL'
 
 
 class Category(models.Model):
