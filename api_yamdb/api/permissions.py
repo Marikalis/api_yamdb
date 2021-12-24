@@ -30,6 +30,7 @@ class IsAuthorOrModerOrReadOnly(permissions.BasePermission):
                     or request.user.role == 'moderator'
                     or obj.author == request.user)
 
+
 class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
