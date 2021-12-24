@@ -2,8 +2,8 @@ from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 from rest_framework_simplejwt import views as jwt_views
 
-from .views import (CategoryViewSet, CreateUserViewSet, GenreViewSet,
-                    ReviewsViewSet, TitlesViewSet, UserViewSet,
+from .views import (CategoryViewSet, CommentsViewSet, CreateUserViewSet,
+                    GenreViewSet, ReviewsViewSet, TitlesViewSet, UserViewSet,
                     ValidationUserViewSet)
 
 router_v1 = SimpleRouter()
@@ -16,10 +16,9 @@ router_v1.register(r'titles/(?P<title_id>\d+)/reviews',
 router_v1.register('auth/signup', CreateUserViewSet, basename='signup')
 router_v1.register('auth/token', ValidationUserViewSet, basename='activate')
 router_v1.register('users', UserViewSet, basename='users')
-#router_v1.register(
-    #r'users/(?P<username>\d+)',
-    #CommentViewSet,
-    #basename='users'
+router_v1.register(r'titles/(?P<title_id>\d+)/reviews/'
+                   r'(?P<review_id>\d+)/comments',
+                   CommentsViewSet, basename='comments')
 
 
 urlpatterns = [
@@ -29,6 +28,3 @@ urlpatterns = [
         name='token_obtain_pair'),
     path('v1/', include(router_v1.urls)),
     ]
-
-
-

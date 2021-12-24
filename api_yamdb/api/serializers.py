@@ -35,8 +35,8 @@ class ReviewSerializer(serializers.ModelSerializer):
                     title=title,
                     author=request.user
             ).exists():
-                raise ValidationError('Каждый пользователь может добавить не '
-                                      'более одного ревью для каждого '
+                raise ValidationError('Пользователь может добавить не '
+                                      'более одного отзыва для каждого '
                                       'произведения!')
         return data
 

@@ -26,8 +26,8 @@ class IsAuthorOrModerOrReadOnly(permissions.BasePermission):
         elif request.user.is_anonymous:
             return False
         else:
-            return (request.user.is_admin
-                    or request.user.is_moderator
+            return (request.user.role == 'admin'
+                    or request.user.role == 'moderator'
                     or obj.author == request.user)
 
 class IsAdmin(permissions.BasePermission):

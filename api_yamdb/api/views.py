@@ -3,20 +3,21 @@ from django.db.models import Avg
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.pagination import (LimitOffsetPagination,
                                        PageNumberPagination)
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework_simplejwt.settings import api_settings
-from reviews.models import Category, Genre, Title, User, Review
+from reviews.models import Category, Genre, Review, Title, User
 
-from .filters import TitlesFilter
+from .filters import TitleFilter
+from .mixins import CreateListDeleteViewSet
 from .permissions import IsAdmin, IsAdminOrReadOnly, IsAuthorOrModerOrReadOnly
-from .serializers import (CategorySerializer, ConfirmationSerializer, CommentSerializer,
-                          GenreSerializer, ReviewSerializer, SignupSerializer,
+from .serializers import (CategorySerializer, CommentSerializer,
+                          ConfirmationSerializer, GenreSerializer,
+                          ReviewSerializer, SignupSerializer,
                           TitlePostSerializer, TitleSerializer, UserSerializer)
 from .tokens import account_activation_token
 
@@ -138,17 +139,10 @@ class ValidationUserViewSet(viewsets.ModelViewSet):
             )
 
 
-class CreateListDeleteViewSet(mixins.CreateModelMixin,
-                              mixins.ListModelMixin,
-                              mixins.DestroyModelMixin,
-                              viewsets.GenericViewSet):
-    pass
-
-
 class CategoryViewSet(CreateListDeleteViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdmin]
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -157,7 +151,7 @@ class CategoryViewSet(CreateListDeleteViewSet):
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -171,13 +165,12 @@ class GenreViewSet(viewsets.ModelViewSet):
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
     pagination_class = PageNumberPagination
+    ordering = ['id']
 
-    permission_classes = (
-        IsAdmin,
-    )
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,
                        filters.OrderingFilter)
-    filterset_class = TitlesFilter
+    filterset_class = TitleFilter
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -188,7 +181,8 @@ class TitlesViewSet(viewsets.ModelViewSet):
 class ReviewsViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     pagination_class = LimitOffsetPagination
-    permission_classes = (IsAdmin,)
+    permission_classes = (IsAuthorOrModerOrReadOnly,
+                          permissions.IsAuthenticatedOrReadOnly)
 
     def _get_title(self):
         return get_object_or_404(Title, id=self.kwargs['title_id'])
@@ -207,7 +201,7 @@ class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = (
-        IsAdmin,
+        IsAuthorOrModerOrReadOnly, permissions.IsAuthenticatedOrReadOnly
     )
 
     def _get_review(self):
