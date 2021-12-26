@@ -51,7 +51,6 @@ class User(AbstractUser):
     def is_moderator(self):
         return self.role == MODERATOR
 
-
     class Meta(AbstractUser.Meta):
         swappable = 'AUTH_USER_MODEL'
 
