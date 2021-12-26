@@ -44,25 +44,20 @@ class UserViewSet(viewsets.ModelViewSet):
             User,
             username=request.user.username)
 
-        if request.method == 'PATCH':
-            serializer = UserSerializer(
-                user,
-                context={'request': request},
-                data=request.data,
-                partial=True
-            )
-            if serializer.is_valid():
-                serializer.save()
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_200_OK)
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        serializer = self.get_serializer(user)
-
-        return Response(serializer.data)
+        if request.method != 'PATCH':
+            serializer = self.get_serializer(user)
+            return Response(serializer.data)
+        serializer = UserSerializer(
+            user,
+            context={'request': request},
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK)
 
 
 class CreateUserViewSet(viewsets.ModelViewSet):
@@ -71,29 +66,24 @@ class CreateUserViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         serializer = SignupSerializer(data=request.data)
-        if serializer.is_valid():
-            user, created = User.objects.get_or_create(
-                username=serializer.data.get('username'),
-                email=serializer.data.get('email')
-            )
-            user.is_active = False
-            user.save()
-            msg = account_activation_token.make_token(user)
-            email = EmailMessage(
-                CORRECT_CODE,
-                msg,
-                to=[serializer.data.get('email')]
-            )
-            email.send()
-            return Response(
-                serializer.data,
-                status=status.HTTP_200_OK
-            )
-        else:
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        serializer.is_valid(raise_exception=True)
+        user, created = User.objects.get_or_create(
+            username=serializer.data.get('username'),
+            email=serializer.data.get('email')
+        )
+        user.is_active = False
+        user.save()
+        msg = account_activation_token.make_token(user)
+        email = EmailMessage(
+            CORRECT_CODE,
+            msg,
+            to=[serializer.data.get('email')]
+        )
+        email.send()
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
 
 
 class ValidationUserViewSet(viewsets.ModelViewSet):
@@ -102,38 +92,33 @@ class ValidationUserViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         serializer = ConfirmationSerializer(data=request.data)
-        if serializer.is_valid():
-            user = get_object_or_404(
-                User,
-                username=serializer.data.get('username'))
-            confirmation_code = serializer.data.get('confirmation_code')
-            if (user is not None
-                    and user.is_active is not True
-                    and account_activation_token.check_token(
-                        user,
-                        confirmation_code
-                    )):
-                user.is_active = True
-                user.save()
-                jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-                jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+        serializer.is_valid(raise_exception=True)
+        user = get_object_or_404(
+            User,
+            username=serializer.data.get('username'))
+        confirmation_code = serializer.data.get('confirmation_code')
+        if (user is not None
+                and user.is_active is not True
+                and account_activation_token.check_token(
+                    user,
+                    confirmation_code
+                )):
+            user.is_active = True
+            user.save()
+            jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+            jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
-                payload = jwt_payload_handler(request.user)
-                token = jwt_encode_handler(payload)
-                return Response(
-                    {
-                        'token': token
-                    },
-                    status=status.HTTP_200_OK
-                )
-            else:
-                return Response(
-                    WRONG_CODE,
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            payload = jwt_payload_handler(request.user)
+            token = jwt_encode_handler(payload)
+            return Response(
+                {
+                    'token': token
+                },
+                status=status.HTTP_200_OK
+            )
         else:
             return Response(
-                serializer.errors,
+                WRONG_CODE,
                 status=status.HTTP_400_BAD_REQUEST
             )
 
