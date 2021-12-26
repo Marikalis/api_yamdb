@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
@@ -22,6 +23,8 @@ from .tokens import account_activation_token
 
 CORRECT_CODE = 'Код регистрации аккаунта'
 WRONG_CODE = 'Неверный код активации'
+USERNAME_ALREADY_EXISTS = 'Такой username уже существует'
+EMAIL_ALREADY_EXTST = 'Такой email уже существует'
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -70,10 +73,18 @@ class CreateUserViewSet(viewsets.ModelViewSet):
     def create(self, request):
         serializer = SignupSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user, created = User.objects.get_or_create(
-            username=serializer.validated_data.get('username').lower(),
-            email=serializer.validated_data.get('email').lower()
-        )
+        username = serializer.validated_data.get('username')
+        email = serializer.validated_data.get('email').lower()
+        try:
+            user = User.objects.get(
+                username=username,
+                email=email)
+        except User.DoesNotExist:
+            if User.objects.filter(username=username).exists():
+                raise ValidationError(USERNAME_ALREADY_EXISTS)
+            if User.objects.filter(email=email).exists():
+                raise ValidationError(EMAIL_ALREADY_EXTST)
+            user = User.objects.create_user(username=username, email=email)
         user.is_active = False
         user.save()
         message = account_activation_token.make_token(user)
