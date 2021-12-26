@@ -141,21 +141,11 @@ class ValidationUserViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(CreateListDeleteViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
-    lookup_field = 'slug'
 
 
 class GenreViewSet(CreateListDeleteViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
-    lookup_field = 'slug'
-
-    http_method_names = ['get', 'post', 'head', 'delete']
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
