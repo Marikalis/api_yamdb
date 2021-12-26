@@ -26,14 +26,12 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = models.Review
 
     def validate(self, data):
-        title_id = self.context['view'].kwargs.get('title_id')
         request = self.context['request']
-        title = get_object_or_404(models.Title, pk=title_id)
         if request.method == 'POST':
-            if models.Review.objects.filter(
-                    title=title,
-                    author=request.user
-            ).exists():
+            title_id = self.context['view'].kwargs.get('title_id')
+            title = get_object_or_404(models.Title, pk=title_id)
+            if models.Review.objects.filter(title=title,
+                                            author=request.user).exists():
                 raise ValidationError('Пользователь может добавить не '
                                       'более одного отзыва для каждого '
                                       'произведения!')
@@ -55,13 +53,12 @@ class GenreSerializer(serializers.ModelSerializer):
 class TitleSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
-    rating = serializers.IntegerField(required=False)
+    rating = serializers.IntegerField(required=False, read_only=True)
 
     class Meta:
         model = models.Title
         fields = ('id', 'name', 'year', 'rating', 'description', 'genre',
                   'category')
-        read_only_fields = ['rating']
 
 
 class TitlePostSerializer(serializers.ModelSerializer):
@@ -78,7 +75,7 @@ class TitlePostSerializer(serializers.ModelSerializer):
 
     def validate_year(self, value):
         year = timezone.now().year
-        if 0 < value > year:
+        if value > year:
             raise serializers.ValidationError('Не корректный год!')
         return value
 

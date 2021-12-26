@@ -43,6 +43,15 @@ class User(AbstractUser):
 
     REQUIRED_FIELDS = ['email']
 
+    @property
+    def is_admin(self):
+        return self.role == ADMIN
+
+    @property
+    def is_moderator(self):
+        return self.role == MODERATOR
+
+
     class Meta(AbstractUser.Meta):
         swappable = 'AUTH_USER_MODEL'
 
@@ -112,6 +121,7 @@ class Title(models.Model):
     )
 
     class Meta:
+        ordering = ['name']
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
 

@@ -4,7 +4,7 @@ from rest_framework.exceptions import ValidationError
 
 def year_validator(value):
     year = timezone.now().year
-    if 0 < value > year:
+    if value > year:
         raise ValidationError(
             f'{value} Не корректный год!'
         )
