@@ -54,7 +54,10 @@ class UserViewSet(viewsets.ModelViewSet):
             partial=True
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        if self.request.user.role == 'admin' or self.request.user.is_superuser:
+            serializer.save()
+        else:
+            serializer.save(role=user.role)
         return Response(
             serializer.data,
             status=status.HTTP_200_OK)
@@ -68,16 +71,16 @@ class CreateUserViewSet(viewsets.ModelViewSet):
         serializer = SignupSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user, created = User.objects.get_or_create(
-            username=serializer.data.get('username'),
-            email=serializer.data.get('email')
+            username=serializer.validated_data.get('username').lower(),
+            email=serializer.validated_data.get('email').lower()
         )
         user.is_active = False
         user.save()
-        msg = account_activation_token.make_token(user)
+        message = account_activation_token.make_token(user)
         email = EmailMessage(
             CORRECT_CODE,
-            msg,
-            to=[serializer.data.get('email')]
+            message,
+            to=[serializer.validated_data.get('email')]
         )
         email.send()
         return Response(
@@ -95,32 +98,30 @@ class ValidationUserViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         user = get_object_or_404(
             User,
-            username=serializer.data.get('username'))
+            username=serializer.validated_data.get('username'))
         confirmation_code = serializer.data.get('confirmation_code')
-        if (user is not None
-                and user.is_active is not True
-                and account_activation_token.check_token(
+        if (user is user.is_active
+                or not account_activation_token.check_token(
                     user,
                     confirmation_code
                 )):
-            user.is_active = True
-            user.save()
-            jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-            jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
-
-            payload = jwt_payload_handler(request.user)
-            token = jwt_encode_handler(payload)
-            return Response(
-                {
-                    'token': token
-                },
-                status=status.HTTP_200_OK
-            )
-        else:
             return Response(
                 WRONG_CODE,
                 status=status.HTTP_400_BAD_REQUEST
             )
+        user.is_active = True
+        user.save()
+        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
+        payload = jwt_payload_handler(request.user)
+        token = jwt_encode_handler(payload)
+        return Response(
+            {
+                'token': token
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 class CategoryViewSet(CreateListDeleteViewSet):

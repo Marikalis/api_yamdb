@@ -86,18 +86,19 @@ class TitlePostSerializer(serializers.ModelSerializer):
 
 class SignupSerializer(serializers.Serializer):
     username = serializers.CharField(
-        validators=[UniqueValidator(
-            queryset=models.User.objects.all())]
+        validators=[
+            UniqueValidator(queryset=models.User.objects.all()),
+        ]
     )
     email = serializers.EmailField(
         validators=[UniqueValidator(
             queryset=models.User.objects.all())]
     )
 
-    def validate(self, data):
-        if data['username'] == 'me':
+    def validate_username(self, value):
+        if value == 'me':
             raise serializers.ValidationError('Cannot signup as me')
-        return data
+        return value
 
 
 class ConfirmationSerializer(serializers.Serializer):
@@ -110,12 +111,6 @@ class UserSerializer(serializers.ModelSerializer):
         validators=[UniqueValidator(
             queryset=models.User.objects.all())]
     )
-
-    def validate_role(self, role):
-        user = self.context['request'].user
-        if user.role == 'admin' or user.is_superuser:
-            return role
-        return user.role
 
     class Meta:
         fields = 'username', 'email', 'role', 'first_name', 'last_name', 'bio'
