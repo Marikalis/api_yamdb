@@ -25,17 +25,17 @@ class User(AbstractUser):
     )
     email = models.EmailField(
         'Почта',
+        max_length=254,
         unique=True,
         blank=True
     )
     bio = models.TextField(
         'Биография',
-        max_length=256,
         blank=True,
     )
     role = models.CharField(
         'Роль',
-        max_length=30,
+        max_length=9,
         default=USER,
         choices=ROLES
     )

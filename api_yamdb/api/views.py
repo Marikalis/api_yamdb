@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
@@ -22,6 +23,8 @@ from .tokens import account_activation_token
 
 CORRECT_CODE = 'Код регистрации аккаунта'
 WRONG_CODE = 'Неверный код активации'
+USERNAME_ALREADY_EXISTS = 'Такой username уже существует'
+EMAIL_ALREADY_EXTST = 'Такой email уже существует'
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -44,25 +47,23 @@ class UserViewSet(viewsets.ModelViewSet):
             User,
             username=request.user.username)
 
-        if request.method == 'PATCH':
-            serializer = UserSerializer(
-                user,
-                context={'request': request},
-                data=request.data,
-                partial=True
-            )
-            if serializer.is_valid():
-                serializer.save()
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_200_OK)
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        serializer = self.get_serializer(user)
-
-        return Response(serializer.data)
+        if request.method != 'PATCH':
+            serializer = self.get_serializer(user)
+            return Response(serializer.data)
+        serializer = UserSerializer(
+            user,
+            context={'request': request},
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        if self.request.user.role == 'admin' or self.request.user.is_superuser:
+            serializer.save()
+        else:
+            serializer.save(role=user.role)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK)
 
 
 class CreateUserViewSet(viewsets.ModelViewSet):
@@ -71,29 +72,32 @@ class CreateUserViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         serializer = SignupSerializer(data=request.data)
-        if serializer.is_valid():
-            user, created = User.objects.get_or_create(
-                username=serializer.data.get('username'),
-                email=serializer.data.get('email')
-            )
-            user.is_active = False
-            user.save()
-            msg = account_activation_token.make_token(user)
-            email = EmailMessage(
-                CORRECT_CODE,
-                msg,
-                to=[serializer.data.get('email')]
-            )
-            email.send()
-            return Response(
-                serializer.data,
-                status=status.HTTP_200_OK
-            )
-        else:
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data.get('username')
+        email = serializer.validated_data.get('email').lower()
+        try:
+            user = User.objects.get(
+                username=username,
+                email=email)
+        except User.DoesNotExist:
+            if User.objects.filter(username=username).exists():
+                raise ValidationError(USERNAME_ALREADY_EXISTS)
+            if User.objects.filter(email=email).exists():
+                raise ValidationError(EMAIL_ALREADY_EXTST)
+            user = User.objects.create_user(username=username, email=email)
+        user.is_active = False
+        user.save()
+        message = account_activation_token.make_token(user)
+        email = EmailMessage(
+            CORRECT_CODE,
+            message,
+            to=[serializer.validated_data.get('email')]
+        )
+        email.send()
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
 
 
 class ValidationUserViewSet(viewsets.ModelViewSet):
@@ -102,40 +106,33 @@ class ValidationUserViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         serializer = ConfirmationSerializer(data=request.data)
-        if serializer.is_valid():
-            user = get_object_or_404(
-                User,
-                username=serializer.data.get('username'))
-            confirmation_code = serializer.data.get('confirmation_code')
-            if (user is not None
-                    and user.is_active is not True
-                    and account_activation_token.check_token(
-                        user,
-                        confirmation_code
-                    )):
-                user.is_active = True
-                user.save()
-                jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-                jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
-
-                payload = jwt_payload_handler(request.user)
-                token = jwt_encode_handler(payload)
-                return Response(
-                    {
-                        'token': token
-                    },
-                    status=status.HTTP_200_OK
-                )
-            else:
-                return Response(
-                    WRONG_CODE,
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        else:
+        serializer.is_valid(raise_exception=True)
+        user = get_object_or_404(
+            User,
+            username=serializer.validated_data.get('username'))
+        confirmation_code = serializer.data.get('confirmation_code')
+        if (user is user.is_active
+                or not account_activation_token.check_token(
+                    user,
+                    confirmation_code
+                )):
             return Response(
-                serializer.errors,
+                WRONG_CODE,
                 status=status.HTTP_400_BAD_REQUEST
             )
+        user.is_active = True
+        user.save()
+        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
+        payload = jwt_payload_handler(request.user)
+        token = jwt_encode_handler(payload)
+        return Response(
+            {
+                'token': token
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 class CategoryViewSet(CreateListDeleteViewSet):

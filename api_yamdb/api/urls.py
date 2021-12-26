@@ -23,7 +23,7 @@ router_v1.register(r'titles/(?P<title_id>\d+)/reviews/'
 
 urlpatterns = [
     path(
-        'token/',
+        'v1/token/',
         jwt_views.TokenObtainPairView.as_view(),
         name='token_obtain_pair'),
     path('v1/', include(router_v1.urls)),
