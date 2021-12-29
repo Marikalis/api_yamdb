@@ -94,7 +94,8 @@ class SignupSerializer(serializers.Serializer):
 
     def validate_username(self, value):
         if value == 'me':
-            raise serializers.ValidationError('Cannot signup as me')
+            raise serializers.ValidationError(
+                'Вы не можете зарегистрироваться под именем me')
         return value
 
 
