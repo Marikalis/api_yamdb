@@ -110,12 +110,10 @@ class ValidationUserViewSet(viewsets.ModelViewSet):
         user = get_object_or_404(
             User,
             username=serializer.validated_data.get('username'))
-        confirmation_code = serializer.data.get('confirmation_code')
-        if (user is user.is_active
-                or not account_activation_token.check_token(
-                    user,
-                    confirmation_code
-                )):
+        confirmation_code = serializer.validated_data.get('confirmation_code')
+        if (user is not account_activation_token.check_token(
+                user,
+                confirmation_code)):
             return Response(
                 WRONG_CODE,
                 status=status.HTTP_400_BAD_REQUEST
