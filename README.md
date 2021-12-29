@@ -3,7 +3,14 @@
 Проект YaMDb позволяет добавлять новых пользователей,
 собирает отзывы пользователей на различные произведения.
 
-Проект реализован на Django REST Framework.
+### Авторы:
+- Maria Lisitskaya https://github.com/Marikalis
+- Alexander Morozov https://github.com/amorozov89
+
+### Технологии:
+- Python
+- Django
+- DRF
 
 ### Как запустить проект:
 
@@ -41,6 +48,14 @@ pip install -r requirements.txt
 
 ```
 python3 manage.py migrate
+```
+
+Если необходимо, заполненить базу данных тестовыми данными:
+
+1. перейдите в корневую папку проекта, где находится файл csv_importer.py
+2. запустите скрипт csv_importer.py:
+```
+python3 csv_importer.py
 ```
 
 Запустить проект:

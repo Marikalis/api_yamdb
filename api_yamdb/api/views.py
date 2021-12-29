@@ -5,7 +5,6 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.pagination import (LimitOffsetPagination,
                                        PageNumberPagination)
 from rest_framework.response import Response
@@ -136,30 +135,17 @@ class ValidationUserViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(CreateListDeleteViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
-    lookup_field = 'slug'
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(CreateListDeleteViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
-    lookup_field = 'slug'
-
-    http_method_names = ['get', 'post', 'head', 'delete']
-
-    def retrieve(self, request, slug):
-        raise MethodNotAllowed('Не разрешенный метод')
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
     pagination_class = PageNumberPagination
-    ordering = ['id']
+    ordering = ['name']
 
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,
@@ -179,7 +165,7 @@ class ReviewsViewSet(viewsets.ModelViewSet):
                           permissions.IsAuthenticatedOrReadOnly)
 
     def _get_title(self):
-        return get_object_or_404(Title, id=self.kwargs['title_id'])
+        return get_object_or_404(Title, id=self.kwargs.get('title_id'))
 
     def perform_create(self, serializer):
         title = self._get_title()
@@ -199,7 +185,7 @@ class CommentsViewSet(viewsets.ModelViewSet):
     )
 
     def _get_review(self):
-        return get_object_or_404(Review, id=self.kwargs['review_id'])
+        return get_object_or_404(Review, id=self.kwargs.get('review_id'))
 
     def perform_create(self, serializer):
         review = self._get_review()
