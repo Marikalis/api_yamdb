@@ -82,15 +82,8 @@ class TitlePostSerializer(serializers.ModelSerializer):
 
 
 class SignupSerializer(serializers.Serializer):
-    username = serializers.CharField(
-        validators=[
-            UniqueValidator(queryset=models.User.objects.all()),
-        ]
-    )
-    email = serializers.EmailField(
-        validators=[UniqueValidator(
-            queryset=models.User.objects.all())]
-    )
+    username = serializers.CharField()
+    email = serializers.EmailField()
 
     def validate_username(self, value):
         if value == 'me':

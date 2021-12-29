@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
@@ -9,7 +8,7 @@ from rest_framework.pagination import (LimitOffsetPagination,
                                        PageNumberPagination)
 from rest_framework.response import Response
 from rest_framework_simplejwt.settings import api_settings
-from reviews.models import Category, Genre, Review, Title, User
+from reviews.models import ADMIN, Category, Genre, Review, Title, User
 
 from .filters import TitleFilter
 from .mixins import CreateListDeleteViewSet
@@ -56,7 +55,7 @@ class UserViewSet(viewsets.ModelViewSet):
             partial=True
         )
         serializer.is_valid(raise_exception=True)
-        if self.request.user.role == 'admin' or self.request.user.is_superuser:
+        if self.request.user.role == ADMIN or self.request.user.is_superuser:
             serializer.save()
         else:
             serializer.save(role=user.role)
@@ -80,9 +79,15 @@ class CreateUserViewSet(viewsets.ModelViewSet):
                 email=email)
         except User.DoesNotExist:
             if User.objects.filter(username=username).exists():
-                raise ValidationError(USERNAME_ALREADY_EXISTS)
+                return Response(
+                    USERNAME_ALREADY_EXISTS,
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             if User.objects.filter(email=email).exists():
-                raise ValidationError(EMAIL_ALREADY_EXTST)
+                return Response(
+                    EMAIL_ALREADY_EXTST,
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             user = User.objects.create_user(username=username, email=email)
         user.is_active = False
         user.save()
@@ -92,6 +97,7 @@ class CreateUserViewSet(viewsets.ModelViewSet):
             message,
             to=[serializer.validated_data.get('email')]
         )
+    # мейл-адрес находится в переменной EMAIL_HOST_USER файла settings.py
         email.send()
         return Response(
             serializer.data,
@@ -99,7 +105,7 @@ class CreateUserViewSet(viewsets.ModelViewSet):
         )
 
 
-class ValidationUserViewSet(viewsets.ModelViewSet):
+class UserValidationViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
 

@@ -4,7 +4,7 @@ from rest_framework_simplejwt import views as jwt_views
 
 from .views import (CategoryViewSet, CommentsViewSet, CreateUserViewSet,
                     GenreViewSet, ReviewsViewSet, TitlesViewSet, UserViewSet,
-                    ValidationUserViewSet)
+                    UserValidationViewSet)
 
 router_v1 = SimpleRouter()
 
@@ -14,7 +14,7 @@ router_v1.register('titles', TitlesViewSet)
 router_v1.register(r'titles/(?P<title_id>\d+)/reviews',
                    ReviewsViewSet, basename='reviews')
 router_v1.register('auth/signup', CreateUserViewSet, basename='signup')
-router_v1.register('auth/token', ValidationUserViewSet, basename='activate')
+router_v1.register('auth/token', UserValidationViewSet, basename='activate')
 router_v1.register('users', UserViewSet, basename='users')
 router_v1.register(r'titles/(?P<title_id>\d+)/reviews/'
                    r'(?P<review_id>\d+)/comments',
