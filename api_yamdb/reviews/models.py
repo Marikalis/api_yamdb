@@ -1,13 +1,15 @@
+from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import (MaxValueValidator, MinValueValidator,
                                     RegexValidator)
 from django.db import models
 
-from .validators import year_validator
 
 USER = 'user'
 MODERATOR = 'moderator'
 ADMIN = 'admin'
+
+CURRENT_YEAR = timezone.now().year
 
 ROLES = [
     (USER, 'user'),
@@ -108,10 +110,13 @@ class Title(models.Model):
     )
     year = models.IntegerField(
         verbose_name='Дата выхода',
-        validators=[year_validator]
+        validators=(MaxValueValidator(
+                CURRENT_YEAR,
+                message='Год не может быть больше текущего!'),)
     )
     description = models.TextField(
         blank=True,
+        null=True,
         verbose_name='Описание',
     )
     genre = models.ManyToManyField(

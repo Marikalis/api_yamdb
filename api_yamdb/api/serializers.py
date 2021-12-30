@@ -1,3 +1,4 @@
+from django.core.validators import MaxValueValidator
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -28,14 +29,15 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         request = self.context['request']
-        if request.method == 'POST':
-            title_id = self.context['view'].kwargs.get('title_id')
-            title = get_object_or_404(models.Title, pk=title_id)
-            if models.Review.objects.filter(title=title,
-                                            author=request.user).exists():
-                raise ValidationError('Пользователь может добавить не '
-                                      'более одного отзыва для каждого '
-                                      'произведения!')
+        if request.method != 'POST':
+            return data
+        title_id = self.context['view'].kwargs.get('title_id')
+        title = get_object_or_404(models.Title, pk=title_id)
+        if models.Review.objects.filter(title=title,
+                                        author=request.user).exists():
+            raise ValidationError('Пользователь может добавить не '
+                                  'более одного отзыва для каждого '
+                                  'произведения!')
         return data
 
 
@@ -52,11 +54,13 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    genre = GenreSerializer(read_only=True, many=True)
-    category = CategorySerializer(read_only=True)
-    rating = serializers.IntegerField(required=False, read_only=True)
+    genre = GenreSerializer(many=True)
+    category = CategorySerializer()
+    rating = serializers.IntegerField(required=False)
+
 
     class Meta:
+        read_only_fields = ('__all__',)
         model = models.Title
         fields = ('id', 'name', 'year', 'rating', 'description', 'genre',
                   'category')
@@ -69,16 +73,13 @@ class TitlePostSerializer(serializers.ModelSerializer):
         slug_field='slug',
         queryset=models.Category.objects.all()
     )
+    year = serializers.IntegerField(validators=(MaxValueValidator(
+                models.CURRENT_YEAR,
+                message='Год не может быть больше текущего!'),))
 
     class Meta:
         model = models.Title
         fields = ('id', 'name', 'year', 'description', 'genre', 'category')
-
-    def validate_year(self, value):
-        year = timezone.now().year
-        if value > year:
-            raise serializers.ValidationError('Не корректный год!')
-        return value
 
 
 class SignupSerializer(serializers.Serializer):
