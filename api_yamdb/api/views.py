@@ -116,7 +116,7 @@ class UserValidationViewSet(viewsets.ModelViewSet):
             User,
             username=serializer.validated_data.get('username'))
         confirmation_code = serializer.validated_data.get('confirmation_code')
-        if (user is not account_activation_token.check_token(
+        if (not account_activation_token.check_token(
                 user,
                 confirmation_code)):
             return Response(

@@ -9,8 +9,6 @@ USER = 'user'
 MODERATOR = 'moderator'
 ADMIN = 'admin'
 
-CURRENT_YEAR = timezone.now().year
-
 ROLES = [
     (USER, 'user'),
     (MODERATOR, 'moderator'),
@@ -45,7 +43,7 @@ class User(AbstractUser):
     )
     role = models.CharField(
         'Роль',
-        max_length=9,
+        max_length=max([len(x[0]) for x in ROLES]),
         default=USER,
         choices=ROLES
     )
@@ -55,10 +53,10 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.role == ADMIN or self.is_staff or self.is_superuser
+        return self.role == ADMIN or self.is_staff
 
     @property
-    def is_moderator(self):
+    def is_moderator_or_admin(self):
         return self.role == MODERATOR or self.is_admin
 
     class Meta(AbstractUser.Meta):
@@ -111,7 +109,7 @@ class Title(models.Model):
     year = models.IntegerField(
         verbose_name='Дата выхода',
         validators=(MaxValueValidator(
-            CURRENT_YEAR,
+            timezone.now().year,
             message='Год не может быть больше текущего!'),)
     )
     description = models.TextField(

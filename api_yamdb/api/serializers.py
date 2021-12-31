@@ -1,4 +1,5 @@
 from django.core.validators import MaxValueValidator
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
@@ -72,7 +73,7 @@ class TitlePostSerializer(serializers.ModelSerializer):
         queryset=models.Category.objects.all()
     )
     year = serializers.IntegerField(validators=(MaxValueValidator(
-        models.CURRENT_YEAR,
+        timezone.now().year,
         message='Год не может быть больше текущего!'),))
 
     class Meta:
