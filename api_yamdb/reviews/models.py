@@ -111,8 +111,8 @@ class Title(models.Model):
     year = models.IntegerField(
         verbose_name='Дата выхода',
         validators=(MaxValueValidator(
-                CURRENT_YEAR,
-                message='Год не может быть больше текущего!'),)
+            CURRENT_YEAR,
+            message='Год не может быть больше текущего!'),)
     )
     description = models.TextField(
         blank=True,

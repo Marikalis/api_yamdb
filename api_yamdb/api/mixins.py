@@ -1,6 +1,4 @@
-from rest_framework import filters, mixins, viewsets
-
-from .permissions import IsAdminOrReadOnly
+from rest_framework import mixins, viewsets
 
 
 class CreateListDeleteViewSet(mixins.CreateModelMixin,

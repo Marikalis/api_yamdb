@@ -144,6 +144,7 @@ class CategoryGenreViewSet(CreateListDeleteViewSet):
     search_fields = ('name',)
     lookup_field = 'slug'
 
+
 class CategoryViewSet(CategoryGenreViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
